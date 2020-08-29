@@ -31,7 +31,7 @@ position of the robot.
 
 ## Render
 
-This is what this project is meant to do. The robot can be controlled thanks to the key arrows and the following view should appear in a window :
+This is what this project is meant to do. The robot can be controlled thanks to the key arrows and the following view should appear in a window 
 
 ![render](Render.png)
 
@@ -56,7 +56,7 @@ in the project folder.
 A graphic window should appear. The position of the robot is represented by a cross. To control the robot : 
 
 - :arrow_right: : move forward 
-- :arrow_down: : move backward 
+- :arrow_left: : move backward 
 - :arrow_up: : rotate clockwise
 - :arrow_down: : rotate counterclockwise
 
