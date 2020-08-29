@@ -123,4 +123,12 @@ This is why we can use all the landmarks to compute the weight of each particule
 distinction between all the landmarks and we do not have to find which landmark correspond to which when we do our computation (which would be the case
 with a real sensor)
 
+- **the resampling** :
+Now that all the particules have been weighted, it is time to decide which ones are consistents and close of the robot and which ones have to be 
+forgotten. To keep the same number of particules during all the simulation, we will have to keep the existing particules that were a good fit for 
+the model and represent them several time in the list of particules to delete the inconsistent'ones. 
+But how do to choose which to keep and which to forget ? 
+Several methods exist to resample based on the likelihood of particules and I chose to use the stratified resampling. 
+The aim of this resampling is to choose particules uniformly among the particules'repartition. To do so, the cumulative sum, i.e. a sequence composed of the cumulated particules' weights, is divided in as many parts as they are particules. Once it is done, a particule will be randomly chosen among each sub division. For this reason, the particules will be sufficiently appart and therefore will cover a larger area around the robot's position. It also ensure that higher weights are resampled more than once which helps getting closer to the actual position of the robot.
+
 ## Comments and todo
