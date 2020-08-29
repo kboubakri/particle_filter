@@ -30,9 +30,6 @@ class Position:
         self._x += dist *cos(self._theta)
         self._y += dist *sin(self._theta)
 
-    def pose_to_array(self):
-        return[self._x,self._y]
-
     def print_pos(self):
         print("x: "+str(self._x) +" y: "+str(self._y))
 
@@ -62,14 +59,6 @@ class DistanceSensor:
         # self._theta = pos._theta
         self._landmarks_list = landmarks_list
 
-    # def compute_distances(self):
-    #     dx = []
-    #     dy = []
-    #     for i in range(len(self._landmarks_list._X)):
-    #         dx.append(self._robot._noisy_position._x - self._landmarks_list._X[i])
-    #         dy.append(self._robot._noisy_position._y - self._landmarks_list._Y[i])
-    #     return (dx,dy)
-
     def compute_noisy_distance(self):
         noisy_distances = []
         for landmark in range(NB_OF_LANDMARKS):
@@ -85,8 +74,8 @@ class Particle:
 
 class ParticleFilter:
     def __init__(self,robot_pos):
-        self._particles = [Particle(Position(randint(0,20),randint(0,20),0),0) for i in range(NB_OF_PARTICLES)]
-        # self._particles = [Particle(Position(robot_pos._x,robot_pos._y,0),1) for i in range(NB_OF_PARTICLES)]
+        self._particles = [Particle(Position(randint(0,20),randint(0,20),0),0) for i in range(NB_OF_PARTICLES)] # Random initialization
+        # self._particles = [Particle(Position(robot_pos._x,robot_pos._y,0),1) for i in range(NB_OF_PARTICLES)] # First position initialization
 
     def get_particles_x(self):
         x_array = []
@@ -132,11 +121,8 @@ class ParticleFilter:
                 dx = particle._position._x - landmarks._X[landmark]
                 dy = particle._position._y - landmarks._Y[landmark]
                 distance = np.sqrt(dx**2+dy**2)
-                # print("distance = " + str(distance))
-                # print("ref = " + str(noisy_dist_function[landmark]))
                 particle._weight *= stats.norm(distance,0.2).pdf(noisy_dist_function[landmark])
             particle._weight += 1.e-300 # avoid round-off to zero
-            # print("w = " + str(particle._weight))
 
     def stratified_resample(self,weights):
         N = NB_OF_PARTICLES
@@ -162,29 +148,11 @@ class ParticleFilter:
 
         # Stratified resampling
         chosen_indexes = self.stratified_resample(weights)
-        # chosen_indexes = [i for i in range(NB_OF_PARTICLES)]
 
         # Resample according to indexes
-        # self._particles = self._particles[chosen_indexes]
         old_particles_list = self._particles
         for i in range(NB_OF_PARTICLES):
             self._particles[i]._position = deepcopy(old_particles_list[chosen_indexes[i]]._position)
-        # print("particles chosen = " + str(chosen_indexes))
-        # print("old particles = ")
-        # i = 0
-        # for p in self._particles:
-        #     print("p"+str(i))
-        #     i +=1
-        #     print(p._position.print_pos())
-        # self._particles = [old_particles_list[i] for i in chosen_indexes]
-        # print("new particles")
-        # i = 0
-        # for p in self._particles:
-        #     print("p"+str(i))
-        #     i +=1
-        #     print(p._position.print_pos())
-        # for p in self._particles:
-        #     self._particles[i]._position = self.estimate_position()
 
     def estimate_position(self):
         sum_x = 0.0
@@ -196,12 +164,10 @@ class ParticleFilter:
 
 
 class StaticLandmarks:
+    # Define at the beginning, they are not supposed to be moved
     def __init__(self,x,y):
         self._X = x
         self._Y = y
-
-    def position_landmark(self,index):
-        return [self._X[index],self._Y[index]]
 
 class Base:
     def __init__(self):
@@ -214,22 +180,22 @@ class Base:
 
     def initialize_plot(self):
         fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('Application of the PF on unycle robot model')
-        self._trajectory, = ax.plot([0], [0],'r',label='Ground truth')  # empty line
-        self._dead_reckoning, = ax.plot([0], [0],'g',label='Dead reckoning')  # empty line
-        ax.set_xlim([0,DIM_OF_WORLD[0]])
-        ax.set_ylim([0,DIM_OF_WORLD[1]])
+        self._ax = fig.add_subplot(111)
+        self._ax.set_title('Application of the PF on unycle robot model')
+        self._trajectory, = self._ax.plot([0], [0],'r',label='Ground truth')  # empty line
+        self._dead_reckoning, = self._ax.plot([0], [0],'g',label='Dead reckoning')  # empty line
+        self._ax.set_xlim([0,DIM_OF_WORLD[0]])
+        self._ax.set_ylim([0,DIM_OF_WORLD[1]])
         x_array = [p._position._x for p in self._particle_filter._particles]
         y_array = [p._position._y for p in self._particle_filter._particles]
-        ax.scatter(x_array,y_array,label="particles")
+        self._ps = self._ax.scatter(x_array,y_array,label="particles")
         self.cid = self._trajectory.figure.canvas.mpl_connect('key_press_event', self)
         plt.scatter(self._static_landmarks._X,self._static_landmarks._Y,s=50,marker='D',label="Static landmarks")
         self._xtraj = [self._robot._position._x]
         self._ytraj = [self._robot._position._y]
         self._dead_reck_x = [self._robot._noisy_position._x]
         self._dead_reck_y = [self._robot._noisy_position._y]
-        ax.legend()
+        self._ax.legend()
 
     def __call__(self,event):
         self.check_key()
@@ -237,10 +203,6 @@ class Base:
             # Print positions
             print("\n\nrobot ")
             self._robot._position.print_pos()
-            # for p in range(NB_OF_PARTICLES):
-            #     print("particle " + str(p))
-            #     self._particle_filter._particles[p]._position.print_pos()
-
             # Update sensor info
             noisy_dist_function = self._distance_sensor.compute_noisy_distance()
             # Update the particles'position upon actuator state
@@ -277,7 +239,8 @@ class Base:
         self._dead_reckoning.set_data(self._dead_reck_x,self._dead_reck_y)
         x_array = [p._position._x for p in self._particle_filter._particles]
         y_array = [p._position._y for p in self._particle_filter._particles]
-        plt.scatter(x_array,y_array,label="particles")
+        self._ps.remove()
+        self._ps = self._ax.scatter(x_array,y_array,label="particles")
         self._trajectory.figure.canvas.draw()
         self._dead_reckoning.figure.canvas.draw()
         plt.draw()
