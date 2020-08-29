@@ -2,7 +2,7 @@
 
 ## Project aims
 
-The purpose of this repository is to Write a particle filter to track the location of a moving point robot
+The purpose of this repository is to write a particle filter to track the location of a moving point robot
 in an environment with static landmarks. The robot is represented in a Graphical Interface (GI) and can be controlled
 using the keyboard. 
 The robot is modellised by a unicyle model with forward and rotational velocity as control inputs.
