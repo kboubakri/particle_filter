@@ -1,3 +1,8 @@
+import numpy as np
+from numpy import cos,sin
+
+PERIOD = 1 # in s
+
 class Position:
     def __init__(self,x,y,theta):
         self._x = x
