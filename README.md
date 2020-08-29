@@ -29,6 +29,10 @@ get ride of the further ones.
 Thanks to those steps, it is possible to get a cloud of particles around the position of the robot after sometime and therefore to estimate the 
 position of the robot. 
 
+## Render
+
+This is what this project is meant to do. The robot can be controlled thanks to the key arrows and the following view should appear in a window :
+
 ## Quickstart 
 
 To launch the projet for the first time, execute : 
@@ -120,6 +124,7 @@ Each particles has a position (x,y,&theta;) and a weight.
 As mentionned above, they are four main steps in a particle filter : 
 
 - **the prediction** : 
+
 When the robot moves, the position of the particles has to be updated accordingly in order to estimate the 
 current position of the robot. To do so, the particles have to mode exactly in the same manner as the robot. This is the reason why 
 in the prediciton phase, the new particule's position is recomputed using the same function as the robot, which is a function of the 
@@ -127,6 +132,7 @@ Position class.
 For this reason, the noise injected in the equation comes from the same standard deviation as it is supposed to come from the same actuators.
 
 - **the weights update** : 
+
 Once the new position of every particule has been computed, it is possible to compare the distance between the particles 
 and the static landmarks and to see how close it is to the distance between the robot and the landmarks. 
 If a particule is close to the robot, then it should be just as far as all the landmarks. If so, the considered particule will be more likely to be 
@@ -142,6 +148,7 @@ distinction between all the landmarks and we do not have to find which landmark 
 with a real sensor)
 
 - **the resampling** :
+
 Now that all the particules have been weighted, it is time to decide which ones are consistents and close of the robot and which ones have to be 
 forgotten. To keep the same number of particules during all the simulation, we will have to keep the existing particules that were a good fit for 
 the model and represent them several time in the list of particules to delete the inconsistent'ones. 
