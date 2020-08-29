@@ -33,6 +33,13 @@ position of the robot.
 
 This is what this project is meant to do. The robot can be controlled thanks to the key arrows and the following view should appear in a window :
 
+![render](Render.png)
+
+Here we can see the static landmarks represented by orange dots, the ground truth (ideal trajectory of the robot) in orange and the dead reckoning trajectory (real trajectory with actuators'noise) in green. 
+
+Around the position of the robot, represented by a cross, we can see several grey points which are the particule at the current timeframe. 
+It is not always easy to distinguish the robot position of the particles are they are often overlapping. 
+
 ## Quickstart 
 
 To launch the projet for the first time, execute : 
