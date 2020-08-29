@@ -169,33 +169,60 @@ class StaticLandmarks:
         self._X = x
         self._Y = y
 
+class GraphicalInterfaceHandler:
+    def __init__(self,robot_pos,landmarks,particles):
+        # Plot initialization
+        self.initialize_plot()
+        # Memorized variables
+        self._xtraj,self._ytraj = [robot_pos._x],[robot_pos._y]
+        self._dead_reck_x,self._dead_reck_y = [robot_pos._x],[robot_pos._y]
+        x_array = [p._position._x for p in particles]
+        y_array = [p._position._y for p in particles]
+        # Plotted elements
+        self._trajectory, = self._ax.plot([0], [0],'r',label='Ground truth')
+        self._dead_reckoning, = self._ax.plot([0], [0],'g',label='Dead reckoning')
+        self._particles = self._ax.scatter(x_array,y_array,label="particles")
+        plt.scatter(landmarks._X,landmarks._Y,s=50,marker='D',label="Static landmarks")
+        self._robot = self._ax.scatter(robot_pos._x,robot_pos._y,marker='X',label="Robot")
+        self._ax.legend()
+
+    def initialize_plot(self):
+         fig = plt.figure()
+         self._ax = fig.add_subplot(111)
+         self._ax.set_title('Application of the PF on unycle robot model')
+         self._ax.set_xlim([0,DIM_OF_WORLD[0]])
+         self._ax.set_ylim([0,DIM_OF_WORLD[1]])
+
+    def update_GI(self,ideal_pos,noisy_pos,particles):
+         # Update memorized values
+         self._xtraj.append(ideal_pos._x)
+         self._ytraj.append(ideal_pos._y)
+         self._dead_reck_x.append(noisy_pos._x)
+         self._dead_reck_y.append(noisy_pos._y)
+         x_array = [p._position._x for p in particles]
+         y_array = [p._position._y for p in particles]
+         # Set values
+         self._trajectory.set_data(self._xtraj,self._ytraj)
+         self._dead_reckoning.set_data(self._dead_reck_x,self._dead_reck_y)
+         self._particles.remove()
+         self._robot.remove()
+         # Draw
+         self._particles = self._ax.scatter(x_array,y_array,label="particles")
+         self._robot = self._ax.scatter(noisy_pos._x,noisy_pos._y,marker='X',label="Robot")
+         self._trajectory.figure.canvas.draw()
+         self._dead_reckoning.figure.canvas.draw()
+         plt.draw()
+
 class Base:
     def __init__(self):
         self._static_landmarks = StaticLandmarks([randint(0,DIM_OF_WORLD[0]) for i in range(NB_OF_LANDMARKS)],[randint(0,DIM_OF_WORLD[1]) for i in range(NB_OF_LANDMARKS)])
         self._robot = Robot(randint(0,DIM_OF_WORLD[0]),randint(0,DIM_OF_WORLD[1]),0)
         self._distance_sensor = DistanceSensor(self._robot,self._static_landmarks,0.1)
         self._particle_filter = ParticleFilter(self._robot._noisy_position)
+        self._GI_handler = GraphicalInterfaceHandler(self._robot._position,self._static_landmarks,self._particle_filter._particles)
         self._has_move = False
-        self.initialize_plot()
-
-    def initialize_plot(self):
-        fig = plt.figure()
-        self._ax = fig.add_subplot(111)
-        self._ax.set_title('Application of the PF on unycle robot model')
-        self._trajectory, = self._ax.plot([0], [0],'r',label='Ground truth')  # empty line
-        self._dead_reckoning, = self._ax.plot([0], [0],'g',label='Dead reckoning')  # empty line
-        self._ax.set_xlim([0,DIM_OF_WORLD[0]])
-        self._ax.set_ylim([0,DIM_OF_WORLD[1]])
-        x_array = [p._position._x for p in self._particle_filter._particles]
-        y_array = [p._position._y for p in self._particle_filter._particles]
-        self._ps = self._ax.scatter(x_array,y_array,label="particles")
-        self.cid = self._trajectory.figure.canvas.mpl_connect('key_press_event', self)
-        plt.scatter(self._static_landmarks._X,self._static_landmarks._Y,s=50,marker='D',label="Static landmarks")
-        self._xtraj = [self._robot._position._x]
-        self._ytraj = [self._robot._position._y]
-        self._dead_reck_x = [self._robot._noisy_position._x]
-        self._dead_reck_y = [self._robot._noisy_position._y]
-        self._ax.legend()
+        # Make the Gi event reactive
+        self.cid = self._GI_handler._trajectory.figure.canvas.mpl_connect('key_press_event', self)
 
     def __call__(self,event):
         self.check_key()
@@ -215,7 +242,7 @@ class Base:
             print("Estimate")
             self._particle_filter.estimate_position().print_pos()
         # Update the graphical interface
-        self.update_GI()
+        self._GI_handler.update_GI(self._robot._position,self._robot._noisy_position,self._particle_filter._particles)
         self._has_move = False
 
     def check_key(self):
@@ -229,22 +256,6 @@ class Base:
             self._robot.change_orientation(1)
         if keyboard.is_pressed('down'):
             self._robot.change_orientation(0)
-
-    def update_GI(self):
-        self._xtraj.append(self._robot._position._x)
-        self._ytraj.append(self._robot._position._y)
-        self._dead_reck_x.append(self._robot._noisy_position._x)
-        self._dead_reck_y.append(self._robot._noisy_position._y)
-        self._trajectory.set_data(self._xtraj,self._ytraj)
-        self._dead_reckoning.set_data(self._dead_reck_x,self._dead_reck_y)
-        x_array = [p._position._x for p in self._particle_filter._particles]
-        y_array = [p._position._y for p in self._particle_filter._particles]
-        self._ps.remove()
-        self._ps = self._ax.scatter(x_array,y_array,label="particles")
-        self._trajectory.figure.canvas.draw()
-        self._dead_reckoning.figure.canvas.draw()
-        plt.draw()
-
 
     def run(self):
         while not keyboard.is_pressed('q'):
