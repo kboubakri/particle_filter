@@ -1,16 +1,18 @@
 #!/usr/bin/python2.7
 
 from random import randint
+from copy import deepcopy
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import stats
 from matplotlib.animation import FuncAnimation
 import keyboard
 from numpy import cos,sin
 import time
 
-PERIOD = 0.2 # in s
+PERIOD = 1 # in s
 DIM_OF_WORLD = [20,20]
-NB_OF_LANDMARKS = 2
+NB_OF_LANDMARKS = 10
 NB_OF_PARTICLES = 50
 
 class Position:
@@ -19,19 +21,17 @@ class Position:
         self._y = y
         self._theta = theta
 
-    def predict_position(self,v,w):
-        self._theta = w
-        self._x = self._x + v *cos(self._theta)*PERIOD
-        self._y = self._y + v *sin(self._theta)*PERIOD
+    def predict_position(self,v,w,speeds_std=[0,0]):
+        # Update heading
+        self._theta = w*PERIOD + np.random.randn()*speeds_std[1]
+        self._theta %= 2*np.pi
+        #Update position
+        dist = v*PERIOD + np.random.randn()*speeds_std[0]
+        self._x += dist *cos(self._theta)
+        self._y += dist *sin(self._theta)
 
-    def add_noise(self,noise):
-        self._x += noise
-        self._y +=  noise
-        self._theta += noise
-
-    def compute_noisy_position(self,mean,standard_deviation):
-        s = np.random.normal(mean,standard_deviation)
-        self.add_noise(s)
+    def pose_to_array(self):
+        return[self._x,self._y]
 
     def print_pos(self):
         print("x: "+str(self._x) +" y: "+str(self._y))
@@ -40,7 +40,7 @@ class Robot:
     def __init__(self,x,y,theta):
         self._position = Position(x,y,theta)
         self._noisy_position = Position(x,y,theta)
-        self._delta_w = 0.1
+        self._delta_w = 1
         self._delta_v = 1
         self._w = 0
         self._v = 0
@@ -48,26 +48,35 @@ class Robot:
     def move(self,orientation):
         self._v = self._delta_v if orientation else -self._delta_v
         self._position.predict_position(self._v,self._w)
-        self._noisy_position.predict_position(self._v,self._w)
-        self._noisy_position.compute_noisy_position(0,0.01)
+        self._noisy_position.predict_position(self._v,self._w,[0.1,0.01])
+        # self._noisy_position.compute_noisy_position(0,0.01)
 
     def change_orientation(self,orientation):
         delta_w = self._delta_w if orientation else -self._delta_w
         self._w = self._w + delta_w
 
 class DistanceSensor:
-    def __init__(self,robot,landmarks_list):
+    def __init__(self,robot,landmarks_list,std_sens):
+        self._std_sens = std_sens
         self._robot = robot
         # self._theta = pos._theta
         self._landmarks_list = landmarks_list
 
-    def compute_distances(self):
-        dx = []
-        dy = []
-        for i in range(len(self._landmarks_list._X)):
-            dx.append(self._robot._noisy_position._x - self._landmarks_list._X[i])
-            dy.append(self._robot._noisy_position._y - self._landmarks_list._Y[i])
-        return (dx,dy)
+    # def compute_distances(self):
+    #     dx = []
+    #     dy = []
+    #     for i in range(len(self._landmarks_list._X)):
+    #         dx.append(self._robot._noisy_position._x - self._landmarks_list._X[i])
+    #         dy.append(self._robot._noisy_position._y - self._landmarks_list._Y[i])
+    #     return (dx,dy)
+
+    def compute_noisy_distance(self):
+        noisy_distances = []
+        for landmark in range(NB_OF_LANDMARKS):
+            dx = self._robot._noisy_position._x - self._landmarks_list._X[landmark]
+            dy = self._robot._noisy_position._y - self._landmarks_list._Y[landmark]
+            noisy_distances.append(np.sqrt(dx**2+dy**2))
+        return noisy_distances
 
 class Particle:
     def __init__(self,position,weight):
@@ -76,8 +85,8 @@ class Particle:
 
 class ParticleFilter:
     def __init__(self,robot_pos):
-        # self._particles = [Particle(Position(randint(0,20),randint(0,20),0),0) for i in range(NB_OF_PARTICLES)]
-        self._particles = [Particle(Position(robot_pos._x,robot_pos._y,0),1) for i in range(NB_OF_PARTICLES)]
+        self._particles = [Particle(Position(randint(0,20),randint(0,20),0),0) for i in range(NB_OF_PARTICLES)]
+        # self._particles = [Particle(Position(robot_pos._x,robot_pos._y,0),1) for i in range(NB_OF_PARTICLES)]
 
     def get_particles_x(self):
         x_array = []
@@ -96,49 +105,109 @@ class ParticleFilter:
     def get_particles_weight(self):
         return [p._weight for p in self._particles]
 
-    def prediction(self,v,w):
-        for particle in self._particles:
-            particle._position.predict_position(v,w)
-            particle._position.compute_noisy_position(0,0.001)
+    def set_particles_weight(self,new_weights):
+        for i in range(NB_OF_PARTICLES):
+            self._particles[i]._weight = new_weights[i]
 
-    def update_weights(self,dx_to_landmarks,dy_to_landmarks,landmarks):
+    def prediction(self,v,w):
+        i = 0
+        for particle in self._particles:
+            print("particle " +str(i)+" before ")
+            particle._position.print_pos()
+            particle._position.predict_position(v,w,[0.3,0.1])
+            print("after ")
+            particle._position.print_pos()
+            i +=1
+
+    def update_weights(self,noisy_dist_function,landmarks):
         measurement_uncertainty = [0.1,0.1] # in x and y
         sum_weights = 0.0
 
         for particle in self._particles:
             particle._weight = 1.0
-            for landmark in range(len(dx_to_landmarks)):
+            for landmark in range(NB_OF_LANDMARKS):
                 # Compute the [dx,dy] between the real position of the landmark
                 # And the estimation according to the position of the particle
                 # Magic sensor --> the landmark is identified
-                x_landmark_world = particle._position._x - dx_to_landmarks[landmark]
-                y_landmark_world = particle._position._y - dy_to_landmarks[landmark]
-                estimated_pos_landmark_world = Position(x_landmark_world,y_landmark_world,0)
-                estimated_pos_landmark_world.print_pos()
-                print("landmark = " + str(landmarks._X[landmark]) + " , " + str(landmarks._Y[landmark]))
-                dx = landmarks._X[landmark] - estimated_pos_landmark_world._x
-                print("dx " +str(dx))
-                dy = landmarks._Y[landmark] - estimated_pos_landmark_world._y
-                w = np.exp(-0.5*((dx/10)**2 + (dy/10)**2))/2*np.pi*measurement_uncertainty[0]*measurement_uncertainty[1]
-                particle._weight = particle._weight*w
-                sum_weights += particle._weight
+                dx = particle._position._x - landmarks._X[landmark]
+                dy = particle._position._y - landmarks._Y[landmark]
+                distance = np.sqrt(dx**2+dy**2)
+                # print("distance = " + str(distance))
+                # print("ref = " + str(noisy_dist_function[landmark]))
+                particle._weight *= stats.norm(distance,0.2).pdf(noisy_dist_function[landmark])
+            particle._weight += 1.e-300 # avoid round-off to zero
+            # print("w = " + str(particle._weight))
+
+    def stratified_resample(self,weights):
+        N = NB_OF_PARTICLES
+        # Position in the weight's spectre
+        positions = (np.random.random(N) + range(N))/N
+        indexes = np.zeros(N,'i')
+        cumulative_sum = np.cumsum(weights)
+        i,j = 0,0
+        while i < N:
+            if positions[i] < cumulative_sum[j]:
+                indexes[i] = j
+                i += 1
+            else:
+                j += 1
+        return indexes
 
     def resample_particles(self):
         # Normalize weights
         weights = self.get_particles_weight()
         weights = weights/np.sum(weights)
-        self._particles = np.random.choice(self._particles,NB_OF_PARTICLES,p=weights)
+
+        print("weights = " + str(weights))
+
+        # Stratified resampling
+        chosen_indexes = self.stratified_resample(weights)
+        # chosen_indexes = [i for i in range(NB_OF_PARTICLES)]
+
+        # Resample according to indexes
+        # self._particles = self._particles[chosen_indexes]
+        old_particles_list = self._particles
+        for i in range(NB_OF_PARTICLES):
+            self._particles[i]._position = deepcopy(old_particles_list[chosen_indexes[i]]._position)
+        # print("particles chosen = " + str(chosen_indexes))
+        # print("old particles = ")
+        # i = 0
+        # for p in self._particles:
+        #     print("p"+str(i))
+        #     i +=1
+        #     print(p._position.print_pos())
+        # self._particles = [old_particles_list[i] for i in chosen_indexes]
+        # print("new particles")
+        # i = 0
+        # for p in self._particles:
+        #     print("p"+str(i))
+        #     i +=1
+        #     print(p._position.print_pos())
+        # for p in self._particles:
+        #     self._particles[i]._position = self.estimate_position()
+
+    def estimate_position(self):
+        sum_x = 0.0
+        sum_y = 0.0
+        for p in range(NB_OF_PARTICLES):
+            sum_x += self._particles[p]._position._x
+            sum_y += self._particles[p]._position._y
+        return(Position(sum_x/NB_OF_PARTICLES,sum_y/NB_OF_PARTICLES,0))
+
 
 class StaticLandmarks:
     def __init__(self,x,y):
         self._X = x
         self._Y = y
 
+    def position_landmark(self,index):
+        return [self._X[index],self._Y[index]]
+
 class Base:
     def __init__(self):
         self._static_landmarks = StaticLandmarks([randint(0,DIM_OF_WORLD[0]) for i in range(NB_OF_LANDMARKS)],[randint(0,DIM_OF_WORLD[1]) for i in range(NB_OF_LANDMARKS)])
         self._robot = Robot(randint(0,DIM_OF_WORLD[0]),randint(0,DIM_OF_WORLD[1]),0)
-        self._distance_sensor = DistanceSensor(self._robot,self._static_landmarks)
+        self._distance_sensor = DistanceSensor(self._robot,self._static_landmarks,0.1)
         self._particle_filter = ParticleFilter(self._robot._noisy_position)
         self._has_move = False
         self.initialize_plot()
@@ -149,11 +218,13 @@ class Base:
         ax.set_title('Application of the PF on unycle robot model')
         self._trajectory, = ax.plot([0], [0],'r',label='Ground truth')  # empty line
         self._dead_reckoning, = ax.plot([0], [0],'g',label='Dead reckoning')  # empty line
+        ax.set_xlim([0,DIM_OF_WORLD[0]])
+        ax.set_ylim([0,DIM_OF_WORLD[1]])
         x_array = [p._position._x for p in self._particle_filter._particles]
         y_array = [p._position._y for p in self._particle_filter._particles]
-        plt.scatter(x_array,y_array,label="particles")
+        ax.scatter(x_array,y_array,label="particles")
         self.cid = self._trajectory.figure.canvas.mpl_connect('key_press_event', self)
-        plt.scatter(self._static_landmarks._X,self._static_landmarks._Y,s=50,label="Static landmarks")
+        plt.scatter(self._static_landmarks._X,self._static_landmarks._Y,s=50,marker='D',label="Static landmarks")
         self._xtraj = [self._robot._position._x]
         self._ytraj = [self._robot._position._y]
         self._dead_reck_x = [self._robot._noisy_position._x]
@@ -163,14 +234,24 @@ class Base:
     def __call__(self,event):
         self.check_key()
         if self._has_move == True:
+            # Print positions
+            print("\n\nrobot ")
+            self._robot._position.print_pos()
+            # for p in range(NB_OF_PARTICLES):
+            #     print("particle " + str(p))
+            #     self._particle_filter._particles[p]._position.print_pos()
+
             # Update sensor info
-            dx_to_landmarks, dy_to_landmarks = self._distance_sensor.compute_distances()
+            noisy_dist_function = self._distance_sensor.compute_noisy_distance()
             # Update the particles'position upon actuator state
             self._particle_filter.prediction(self._robot._v,self._robot._w)
             # Compute particles'weight
-            self._particle_filter.update_weights(dx_to_landmarks,dy_to_landmarks,self._static_landmarks)
+            self._particle_filter.update_weights(noisy_dist_function,self._static_landmarks)
             # Resample
             self._particle_filter.resample_particles()
+            # Estimate
+            print("Estimate")
+            self._particle_filter.estimate_position().print_pos()
         # Update the graphical interface
         self.update_GI()
         self._has_move = False
