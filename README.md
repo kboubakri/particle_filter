@@ -1,4 +1,4 @@
-# particle_filter
+# particle filter
 
 ## Project aims
 
@@ -10,6 +10,24 @@ The robot is modellised by a unicyle model with forward and rotational velocity 
 The groundtruth, the dead-reckoning and the estimation made thanks to the particle filter are also represented in the GI. 
 
 ## How does a particle filter works ?
+
+Particle Filters are one of the most popular tracking tools used in robotics for more than 2 decades in different applications.
+It is especially useful when the environment in which the robot evolves is known but not necessarly its first position. 
+
+The filter's name comes from it's principle : instead of trying to define a position as an estimation of the robot's position, 
+it will abstract particles distributed in the world and that will represent possible states, in this case positions, of the robot. 
+Some particles will be closer to the robot and therefore more consistent and more interesting in terms of modelling. This difference 
+of importance will be quantified using weights : each particule has a weight and the higher it is, the more representative the particule is.
+
+To keep up with the robot's movements, the position of the particles will be updated each time following the same kinematic model as the robot. 
+This model will be injected with noises related to the actuators in order to simulate the real behavior of the robot. At this point,
+some particules might have strayed further from the robot, it is therefore necessary to recompute the weight of each particules in order 
+to rank them according to their consistency. Once it is done, some particules might be so far away from the robot that they might become 
+non-significant regarding the modelling. This is when the resampling take place in order to duplicate the most important particules and the 
+get ride of the further ones. 
+
+Thanks to those steps, it is possible to get a cloud of particles around the position of the robot after sometime and therefore to estimate the 
+position of the robot. 
 
 ## Quickstart 
 
