@@ -53,6 +53,13 @@ sudo python base.py
 `` 
 in the project folder.
 
+A graphic window should appear. The position of the robot is represented by a cross. To control the robot : 
+
+- :arrow_right: : move forward 
+- :arrow_down: : move backward 
+- :arrow_up: : rotate clockwise
+- :arrow_down: : rotate counterclockwise
+
 Once you want to close the project, close the GI window and press the 'q' key on your keyboard. 
 
 ## The code explained 
