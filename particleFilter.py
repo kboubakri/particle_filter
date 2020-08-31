@@ -56,25 +56,25 @@ class ParticleFilter:
                 particle._weight *= stats.norm(distance,std_sensor).pdf(noisy_dist_function[landmark])
             particle._weight += 1.e-300 # avoid round-off to zero
 
-    # def stratified_resample(self,weights):
-    """
-        Use stratified resampling method to select particles to keep base on their
-        weights. (cf README)
-        Return the list of indexes (with doublons)
-    """
-    #     N = self._nb_of_particles
-    #     # Positions in the weight's spectre
-    #     positions = (np.random.random(N) + range(N))/N
-    #     indexes = np.zeros(N,'i')
-    #     cumulative_sum = np.cumsum(weights)
-    #     i,j = 0,0
-    #     while i < N:
-    #         if positions[i] < cumulative_sum[j]:
-    #             indexes[i] = j
-    #             i += 1
-    #         else:
-    #             j += 1
-    #     return indexes
+    def stratified_resample(self,weights):
+        """
+            Use stratified resampling method to select particles to keep base on their
+            weights. (cf README)
+            Return the list of indexes (with doublons)
+        """
+        N = self._nb_of_particles
+        # Positions in the weight's spectre
+        positions = (np.random.random(N) + range(N))/N
+        indexes = np.zeros(N,'i')
+        cumulative_sum = np.cumsum(weights)
+        i,j = 0,0
+        while i < N:
+            if positions[i] < cumulative_sum[j]:
+                indexes[i] = j
+                i += 1
+            else:
+                j += 1
+        return indexes
 
     def systematic_resample(self,weights):
         """
@@ -104,8 +104,8 @@ class ParticleFilter:
         weights = weights/np.sum(weights)
 
         # Stratified resampling
-        # chosen_indexes = self.stratified_resample(weights)
-        chosen_indexes = self.systematic_resample(weights)
+        chosen_indexes = self.stratified_resample(weights)
+        # chosen_indexes = self.systematic_resample(weights)
 
         # Resample according to indexes
         old_particles_list = self._particles

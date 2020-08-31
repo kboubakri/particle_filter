@@ -9,8 +9,8 @@ import keyboard
 DIM_OF_WORLD = [20,20]
 NB_OF_LANDMARKS = 10
 NB_OF_PARTICLES = 50
-STD_ACTUATORS = [0.3,0.1]
-STD_SENSOR = 0.3
+STD_ACTUATORS = [0.1,0.2]
+STD_SENSOR = 0.2
 
 class StaticLandmarks:
     """
@@ -33,16 +33,16 @@ class GraphicalInterfaceHandler:
         # Plotted elements
         self._trajectory, = self._ax.plot([0], [0],'r',label='Ground truth')
         self._dead_reckoning, = self._ax.plot([0], [0],'g',label='Dead reckoning')
-        self._particles = self._ax.scatter(x_array,y_array,label="particles")
-        plt.scatter(landmarks._X,landmarks._Y,s=50,marker='D',label="Static landmarks")
-        self._robot = self._ax.scatter(robot_pos._x,robot_pos._y,marker='X',label="Robot")
+        self._particles = self._ax.scatter(x_array,y_array,c='blue',label="particles")
+        plt.scatter(landmarks._X,landmarks._Y,c='orange',s=50,marker='D',label="Static landmarks")
+        self._robot = self._ax.scatter(robot_pos._x,robot_pos._y,c='purple',marker='X',label="Robot")
         self._ax.legend()
 
     def initialize_plot(self):
          """ Initialize the subplot for the GI """
          fig = plt.figure()
          self._ax = fig.add_subplot(111)
-         self._ax.set_title('Application of the PF on unycle robot model')
+         self._ax.set_title('Application of the particle filter for an unicycle robot')
          self._ax.set_xlim([0,DIM_OF_WORLD[0]])
          self._ax.set_ylim([0,DIM_OF_WORLD[1]])
 
@@ -64,8 +64,8 @@ class GraphicalInterfaceHandler:
          self._particles.remove()
          self._robot.remove()
          # Draw
-         self._particles = self._ax.scatter(x_array,y_array,label="particles")
-         self._robot = self._ax.scatter(noisy_pos._x,noisy_pos._y,marker='X',label="Robot")
+         self._particles = self._ax.scatter(x_array,y_array,c='blue',label="particles")
+         self._robot = self._ax.scatter(noisy_pos._x,noisy_pos._y,c='purple',marker='X',label="Robot")
          self._trajectory.figure.canvas.draw()
          self._dead_reckoning.figure.canvas.draw()
          plt.draw()
