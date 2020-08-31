@@ -200,7 +200,11 @@ self._y += dist *sin(self._theta)
 
 The standard deviation of the actuators have been arbitrarly chosen to be [0.1,0.1] which correspond to a pretty good precision. To test the influence of the precision of the actuators, we made the robot follow a straight line with std_deviation = [0.1,0.1] (first image) and with std_deviation = [0.5,0.3] (second image). We can see how significant the error becomes. 
 
-NB : The particules are still around the robot's real position because they have the same noisy kinematic model and thus are not affect by this variable.
+![good_precision](good_precision.png)
+
+![bad_precision](bad_precision.png)
+
+**NB** : The particules are still around the robot's real position because they have the same noisy kinematic model and thus are not affect by this variable.
 
 ### Improvements of the Graphical Interface 
 
