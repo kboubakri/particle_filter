@@ -39,9 +39,7 @@ class GraphicalInterfaceHandler:
         self._ax.legend()
 
     def initialize_plot(self):
-        """
-            Initialize the subplot for the GI
-        """
+         """ Initialize the subplot for the GI """
          fig = plt.figure()
          self._ax = fig.add_subplot(111)
          self._ax.set_title('Application of the PF on unycle robot model')
@@ -49,12 +47,11 @@ class GraphicalInterfaceHandler:
          self._ax.set_ylim([0,DIM_OF_WORLD[1]])
 
     def update_GI(self,ideal_pos,noisy_pos,particles):
-        """
+         """
             Get the new ideal and noisy position of the robot and each particles
-            And use it to update the plotting of the dead reckoning and ground truth
-            trajectories as well as the particles' position
-        """
-         # Update memorized values
+            and use it to update the plotting of the dead reckoning and ground truth
+             trajectories as well as the particles' position
+         """
          self._xtraj.append(ideal_pos._x)
          self._ytraj.append(ideal_pos._y)
          self._dead_reck_x.append(noisy_pos._x)
