@@ -223,3 +223,9 @@ They are both meant to ensure that larger weights are proportionality resampled 
 At first, I have implemented the stratified resampling because I wanted to make sure that most of the higher weights will be selected multiple times. But with a small standard deviation for the distance sensor, I realized that quickly all particles were getting the same position and was less able to have an adaptative behavior. For this reason, I used the systematic resampling instead even though the results were not significantly different. 
 
 ### Implementation of a more realistic sensor 
+
+In this simulation, I implemented an ideal distance sensor that even though has noise, knows exactly where the landmarks are and which one we are reffering to. I real life, this is rarely this case. A more realistic device would be a sensor with a certain range which is able to detect objects and to return their distance to the robot without knowing which landmark we are considering. This is one of the most important step toward a more realistic implementation. 
+
+In this case, to recompute the weight of each particule the orientation of the particule will be important because the position of the landmark would have to to be computed by projecting the distance to the landmark in the particule's referential. 
+
+Once all the landmarks would have been projected, each landmark would be identified by chosing the real landmark's position closest to the projected position of the landmark. This implement will lead to less reliable result as some particules might be far from the real position of the robot but in a configuration where they would be equally distant from a other set of landmarks. 
