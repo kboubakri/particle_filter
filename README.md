@@ -51,7 +51,7 @@ Then to run the project, do :
 ``
 sudo python base.py
 `` 
-in the project folder.
+in the project folder. (sudo is needed for the keyboard package)
 
 A graphic window should appear. The position of the robot is represented by a cross. To control the robot : 
 
@@ -128,9 +128,6 @@ The kinematics model used here is :
 
 with v<sub>&gamma;</sub> = v &Delta;<sub>t</sub> + &gamma;<sub>v</sub> and &Delta;<sub>t</sub> the time of movement
 
-(&gamma;<sub>v</sub>,&gamma;<sub>&omega;</sub>) are simulated through the standard deviation of the actuators and have be arbitrarly chosen 
-to be [0.3,0.1].
-
 ### ParticleFilter.py 
 
 The particle filter is defined through a list of particles, randomly distributed in the world at the initialization of the simulation. 
@@ -171,3 +168,54 @@ Several methods exist to resample based on the likelihood of particules and I ch
 The aim of this resampling is to choose particules uniformly among the particules'repartition. To do so, the cumulative sum, i.e. a sequence composed of the cumulated particules' weights, is divided in as many parts as they are particules. Once it is done, a particule will be randomly chosen among each sub division. For this reason, the particules will be sufficiently appart and therefore will cover a larger area around the robot's position. It also ensure that higher weights are resampled more than once which helps getting closer to the actual position of the robot.
 
 ## Comments and todo
+
+### Noise implementation 
+
+To get a realistic simulation and to quantify the performances of the particle filter, it is important to choose wisely how to implement the noise for the actuators and for the distance sensor. 
+
+Let's have a look back at the kinematic equations : 
+
+> &theta; = &theta; + &omega; &Delta;<sub>t</sub> +  &gamma;<sub>&omega;</sub>
+
+> x = x + v<sub>&gamma;</sub> cos(&theta;)
+
+> y = y + v<sub>&gamma;</sub> sin(&theta;)
+
+We said that (&gamma;<sub>v</sub>,&gamma;<sub>&omega;</sub>) was the noise for v and &omega;. 
+
+But what does this noise looks like ? 
+
+Well, this noise represent the difference between the order given to the actuators and their real output. For instance, if the robot is asked to move forward in a 1m long straight line, it is not rare that it actually goes a little bit further or closer (maybe 0.97 m or 1.01 m) or even that it deviates a little bit on the side rather than going straight. Maybe the wheels slips on the floor or that the two wheels are not exactly parallels or just that this is the normal standard deviation of the actuators. In any of this case, an error in the positionning might happen during the movement and this error will sum along the trajectory. 
+
+So without knowing it exactly (noises are not constants), we need to modelise this noise. Let's look back at our example of the straight line. Even if it is 0.97m or 1.01m it is still around the original order and it will not likely be further from it than a certain value, which is called the standard deviation and is specific to each component, here the wheels'actuators. To modelise it, we use the [normal distribution](https://numpy.org/devdocs/reference/random/generated/numpy.random.randn.html) centered on the order and of variance equal to the squarred standard deviation. It has been implemented as following in the code : 
+```
+# Update heading
+self._theta = w*PERIOD + np.random.randn()*speeds_std[1]
+self._theta %= 2*np.pi
+#Update position
+dist = v*PERIOD + np.random.randn()*speeds_std[0]
+self._x += dist *cos(self._theta)
+self._y += dist *sin(self._theta)
+```
+
+The standard deviation of the actuators have been arbitrarly chosen to be [0.1,0.1] which correspond to a pretty good precision. To test the influence of the precision of the actuators, we made the robot follow a straight line with std_deviation = [0.1,0.1] (first image) and with std_deviation = [0.5,0.3] (second image). We can see how significant the error becomes. 
+
+NB : The particules are still around the robot's real position because they have the same noisy kinematic model and thus are not affect by this variable.
+
+### Improvements of the Graphical Interface 
+
+This project has been the opportunity for me to implement a particle filter for the first time. Therefore, I have implemented a quick graphical interface in order to focus on the algorithmic part. 
+
+Therefore, many points could be improved, such as : 
+- implementing a collision handler
+- preventing the robot to move outside the range of the axis 
+- Using an other interface than matplotlib or even a simulator such as Unity or Webot to get a better rendering 
+
+### Choice of the resampling method 
+
+In order to resample the particules based on their new weights, I have considered several method among which the stratified and the systematic resampling. 
+They are both meant to ensure that larger weights are proportionality resampled more often but systematic resampling get a more uniform distribution over the particules space whereas the stratified resampling advantages higher weights. 
+
+At first, I have implemented the stratified resampling because I wanted to make sure that most of the higher weights will be selected multiple times. But with a small standard deviation for the distance sensor, I realized that quickly all particles were getting the same position and was less able to have an adaptative behavior. For this reason, I used the systematic resampling instead even though the results were not significantly different. 
+
+### Implementation of a more realistic sensor 
