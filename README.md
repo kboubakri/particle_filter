@@ -2,7 +2,7 @@
 
 ## Project aims
 
-The purpose of this repository is to Write a particle filter to track the location of a moving point robot
+The purpose of this repository is to write a particle filter to track the location of a moving point robot
 in an environment with static landmarks. The robot is represented in a Graphical Interface (GI) and can be controlled
 using the keyboard. 
 The robot is modellised by a unicyle model with forward and rotational velocity as control inputs.
@@ -31,7 +31,14 @@ position of the robot.
 
 ## Render
 
-This is what this project is meant to do. The robot can be controlled thanks to the key arrows and the following view should appear in a window :
+This is what this project is meant to do. The robot can be controlled thanks to the key arrows and the following view should appear in a window 
+
+![render](Render.png)
+
+Here we can see the static landmarks represented by orange dots, the ground truth (ideal trajectory of the robot) in orange and the dead reckoning trajectory (real trajectory with actuators'noise) in green. 
+
+Around the position of the robot, represented by a cross, we can see several grey points which are the particule at the current timeframe. 
+It is not always easy to distinguish the robot position of the particles as they are often overlapping. 
 
 ## Quickstart 
 
@@ -45,6 +52,13 @@ Then to run the project, do :
 sudo python base.py
 `` 
 in the project folder.
+
+A graphic window should appear. The position of the robot is represented by a cross. To control the robot : 
+
+- :arrow_right: : move forward 
+- :arrow_left: : move backward 
+- :arrow_up: : rotate clockwise
+- :arrow_down: : rotate counterclockwise
 
 Once you want to close the project, close the GI window and press the 'q' key on your keyboard. 
 
