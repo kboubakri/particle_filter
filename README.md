@@ -1,4 +1,4 @@
-# particle filter
+# Particle filter
 
 ## Project aims
 
@@ -120,10 +120,9 @@ Finally, let's (&gamma;<sub>v</sub>,&gamma;<sub>&omega;</sub>) the noise for cor
 The kinematics model used here is : 
 
 > &theta; = &theta; + &omega; &Delta;<sub>t</sub> +  &gamma;<sub>&omega;</sub>
-
+>
 > x = x + v<sub>&gamma;</sub> cos(&theta;)
-
-
+>
 > y = y + v<sub>&gamma;</sub> sin(&theta;)
 
 with v<sub>&gamma;</sub> = v &Delta;<sub>t</sub> + &gamma;<sub>v</sub> and &Delta;<sub>t</sub> the time of movement
@@ -176,9 +175,9 @@ To get a realistic simulation and to quantify the performances of the particle f
 Let's have a look back at the kinematic equations : 
 
 > &theta; = &theta; + &omega; &Delta;<sub>t</sub> +  &gamma;<sub>&omega;</sub>
-
+>
 > x = x + v<sub>&gamma;</sub> cos(&theta;)
-
+>
 > y = y + v<sub>&gamma;</sub> sin(&theta;)
 
 We said that (&gamma;<sub>v</sub>,&gamma;<sub>&omega;</sub>) was the noise for v and &omega;. 
