@@ -9,7 +9,7 @@ import keyboard
 DIM_OF_WORLD = [20,20]
 NB_OF_LANDMARKS = 10
 NB_OF_PARTICLES = 50
-STD_ACTUATORS = [0.1,0.2]
+STD_ACTUATORS = [0.1,0.1]
 STD_SENSOR = 0.2
 
 class StaticLandmarks:
