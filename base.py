@@ -1,7 +1,8 @@
 #!/usr/bin/python2.7
-from random import randint
 from robot import Robot,DistanceSensor
 from particleFilter import Particle, ParticleFilter
+
+from random import randint
 import matplotlib.pyplot as plt
 import keyboard
 
@@ -61,6 +62,7 @@ class GraphicalInterfaceHandler:
          self._dead_reckoning.figure.canvas.draw()
          plt.draw()
 
+
 class Base:
     def __init__(self):
         self._has_move = False # Check if left or right arrow has been pressed
@@ -82,9 +84,13 @@ class Base:
             # Update the particles'position upon actuator state
             self._particle_filter.prediction(self._robot._v,self._robot._w,STD_ACTUATORS)
             # Compute particles'weight
-            self._particle_filter.update_weights(noisy_dist_function,self._static_landmarks)
+            self._particle_filter.update_weights(noisy_dist_function,self._static_landmarks,STD_SENSOR)
             # Resample particules
             self._particle_filter.resample_particles()
+            # Estimate position (barycenter)
+            estimated_positon,covariance = self._particle_filter.estimate_position()
+            # Print output
+            # self.print_out(self._robot._noisy_position,estimated_positon,covariance)
         # Update the graphical interface
         self._GI_handler.update_GI(self._robot._position,self._robot._noisy_position,self._particle_filter._particles)
         self._has_move = False
@@ -100,6 +106,13 @@ class Base:
             self._robot.change_orientation(1)
         if keyboard.is_pressed('down'):
             self._robot.change_orientation(0)
+
+    def print_out(self,real_pos,estimated_pos,covariance):
+        print("\nrealistic robot position :")
+        real_pos.print_pos()
+        print("estimated position :")
+        estimated_pos.print_pos()
+        print("with covariance = " + str(covariance))
 
     def run(self):
         # Loop until 'q' is pressed.

@@ -28,8 +28,7 @@ class ParticleFilter:
         for particle in self._particles:
             particle._position.predict_position(v,w,std_actuators)
 
-    def update_weights(self,noisy_dist_function,landmarks):
-        measurement_uncertainty = [0.1,0.1] # in x and y
+    def update_weights(self,noisy_dist_function,landmarks,std_sensor):
         sum_weights = 0.0
 
         for particle in self._particles:
@@ -41,16 +40,30 @@ class ParticleFilter:
                 dx = particle._position._x - landmarks._X[landmark]
                 dy = particle._position._y - landmarks._Y[landmark]
                 distance = np.sqrt(dx**2+dy**2)
-                particle._weight *= stats.norm(distance,0.2).pdf(noisy_dist_function[landmark])
+                particle._weight *= stats.norm(distance,std_sensor).pdf(noisy_dist_function[landmark])
             particle._weight += 1.e-300 # avoid round-off to zero
 
-    def stratified_resample(self,weights):
+    # def stratified_resample(self,weights):
+    #     N = self._nb_of_particles
+    #     # Positions in the weight's spectre
+    #     positions = (np.random.random(N) + range(N))/N
+    #     indexes = np.zeros(N,'i')
+    #     cumulative_sum = np.cumsum(weights)
+    #     i,j = 0,0
+    #     while i < N:
+    #         if positions[i] < cumulative_sum[j]:
+    #             indexes[i] = j
+    #             i += 1
+    #         else:
+    #             j += 1
+    #     return indexes
+
+    def systematic_resample(self,weights):
         N = self._nb_of_particles
-        # Position in the weight's spectre
-        positions = (np.random.random(N) + range(N))/N
+        positions = (np.arange(N) + np.random.random())/N
         indexes = np.zeros(N,'i')
         cumulative_sum = np.cumsum(weights)
-        i,j = 0,0
+        i, j = 0, 0
         while i < N:
             if positions[i] < cumulative_sum[j]:
                 indexes[i] = j
@@ -65,7 +78,8 @@ class ParticleFilter:
         weights = weights/np.sum(weights)
 
         # Stratified resampling
-        chosen_indexes = self.stratified_resample(weights)
+        # chosen_indexes = self.stratified_resample(weights)
+        chosen_indexes = self.systematic_resample(weights)
 
         # Resample according to indexes
         old_particles_list = self._particles
@@ -73,10 +87,14 @@ class ParticleFilter:
             self._particles[i]._position = deepcopy(old_particles_list[chosen_indexes[i]]._position)
 
     def estimate_position(self):
-        sum_x = 0.0
-        sum_y = 0.0
+        """
+            Compute the barycenter of all the particles
+        """
         N = self._nb_of_particles
-        for p in range(N):
-            sum_x += self._particles[p]._position._x
-            sum_y += self._particles[p]._position._y
-        return(Position(sum_x/N,sum_y/N,0))
+
+        x_array = [p._position._x for p in self._particles]
+        y_array = [p._position._y for p in self._particles]
+
+        covariance = np.cov(x_array,y_array)
+
+        return(Position(np.sum(x_array)/N,np.sum(y_array)/N,0),covariance)
