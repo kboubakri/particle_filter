@@ -11,22 +11,32 @@ class Robot:
         self._w = 0
         self._v = 0
 
-    def move(self,orientation):
-        self._v = self._delta_v if orientation else -self._delta_v
+    def move(self,direction):
+        """
+            Get the robot's direction from key arrows and move the robot accordingly
+        """
+        self._v = self._delta_v if direction else -self._delta_v
         self._position.predict_position(self._v,self._w)
         self._noisy_position.predict_position(self._v,self._w,self._std_actuators)
 
     def change_orientation(self,orientation):
+        """
+            Get the robot's angular velocity from key arrows and orient the robot accordingly
+        """
         delta_w = self._delta_w if orientation else -self._delta_w
         self._w = self._w + delta_w
 
 class DistanceSensor:
     def __init__(self,robot,landmarks_list,std_sens):
-        self._std_sens = std_sens
+        self._std_sens = std_sens   # Same error along x and y axis
         self._robot = robot
         self._landmarks_list = landmarks_list
 
     def compute_noisy_distance(self):
+        """
+            Compute the distance between the robot and each landmark
+            Mimic
+        """
         noisy_distances = []
         for landmark in range(len(self._landmarks_list._X)):
             dx = self._robot._noisy_position._x - self._landmarks_list._X[landmark]

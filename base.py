@@ -13,7 +13,10 @@ STD_ACTUATORS = [0.3,0.1]
 STD_SENSOR = 0.1
 
 class StaticLandmarks:
-    # Define at the beginning, they are not supposed to be moved
+    """
+        Define a list of static landmarks using their (x,y) coordinates
+        The landmarks are not meant to be moved
+    """
     def __init__(self,x,y):
         self._X = x
         self._Y = y
@@ -36,6 +39,9 @@ class GraphicalInterfaceHandler:
         self._ax.legend()
 
     def initialize_plot(self):
+        """
+            Initialize the subplot for the GI
+        """
          fig = plt.figure()
          self._ax = fig.add_subplot(111)
          self._ax.set_title('Application of the PF on unycle robot model')
@@ -43,6 +49,11 @@ class GraphicalInterfaceHandler:
          self._ax.set_ylim([0,DIM_OF_WORLD[1]])
 
     def update_GI(self,ideal_pos,noisy_pos,particles):
+        """
+            Get the new ideal and noisy position of the robot and each particles
+            And use it to update the plotting of the dead reckoning and ground truth
+            trajectories as well as the particles' position
+        """
          # Update memorized values
          self._xtraj.append(ideal_pos._x)
          self._ytraj.append(ideal_pos._y)
@@ -77,6 +88,11 @@ class Base:
 
     # Event sensitive function, called when a key is pressed
     def __call__(self,event):
+        """
+            Event sensitve function. Called anytime a key is pressed
+            Used to call the filter's function, update the robot's positions
+            and to plot the new values in the GI
+        """
         self.check_key()    # Update the robot position w/respect to the pressed key
         if self._has_move == True:
             # Update sensor info (with noise)
@@ -96,6 +112,10 @@ class Base:
         self._has_move = False
 
     def check_key(self):
+        """
+            Check if one of the arrows key has been pressed and update the robot's
+            position accordingly
+        """
         if keyboard.is_pressed('right'):
             self._robot.move(1)
             self._has_move = True
@@ -115,8 +135,10 @@ class Base:
         print("with covariance = " + str(covariance))
 
     def run(self):
-        # Loop until 'q' is pressed.
-        # The call function is dealing with the event handling
+        """
+            Loop until 'q' is pressed.
+            The __call__ function is dealing with the event handling
+        """
         while not keyboard.is_pressed('q'):
             plt.show()
             plt.close()

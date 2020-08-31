@@ -18,17 +18,30 @@ class ParticleFilter:
         # self._particles = [Particle(Position(robot_pos._x,robot_pos._y,0),1) for i in range(NB_OF_PARTICLES)] # First position initialization
 
     def get_particles_weight(self):
+        """
+            Return a list of each particle's weight
+        """
         return [p._weight for p in self._particles]
 
     def set_particles_weight(self,new_weights):
+        """
+            Set each particle's weight using values in a list given as input
+        """
         for i in range(self._nb_of_particles):
             self._particles[i]._weight = new_weights[i]
 
     def prediction(self,v,w,std_actuators):
+        """
+            Use the robot kinematic model to predict the next position of each particle
+        """
         for particle in self._particles:
             particle._position.predict_position(v,w,std_actuators)
 
     def update_weights(self,noisy_dist_function,landmarks,std_sensor):
+        """
+            Update each particle's weight upon the difference between the robot
+            and the particle distance to each landmark
+        """
         sum_weights = 0.0
 
         for particle in self._particles:
@@ -44,6 +57,11 @@ class ParticleFilter:
             particle._weight += 1.e-300 # avoid round-off to zero
 
     # def stratified_resample(self,weights):
+    """
+        Use stratified resampling method to select particles to keep base on their
+        weights. (cf README)
+        Return the list of indexes (with doublons)
+    """
     #     N = self._nb_of_particles
     #     # Positions in the weight's spectre
     #     positions = (np.random.random(N) + range(N))/N
@@ -59,6 +77,11 @@ class ParticleFilter:
     #     return indexes
 
     def systematic_resample(self,weights):
+        """
+            Use systematic resampling method to select particles to keep base on their
+            weights. (cf README)
+            Return the list of indexes (with doublons)
+        """
         N = self._nb_of_particles
         positions = (np.arange(N) + np.random.random())/N
         indexes = np.zeros(N,'i')
@@ -73,6 +96,9 @@ class ParticleFilter:
         return indexes
 
     def resample_particles(self):
+        """
+            Based on the chosen resampling method, update self._particles
+        """
         # Normalize weights
         weights = self.get_particles_weight()
         weights = weights/np.sum(weights)
@@ -89,6 +115,7 @@ class ParticleFilter:
     def estimate_position(self):
         """
             Compute the barycenter of all the particles
+            Return its position and the covariance in x and y
         """
         N = self._nb_of_particles
 

@@ -10,6 +10,10 @@ class Position:
         self._theta = theta
 
     def predict_position(self,v,w,speeds_std=[0,0]):
+        """
+            Define the kinematic model of the robot (cf README) and use it to
+            update the position 
+        """
         # Update heading
         self._theta = w*PERIOD + np.random.randn()*speeds_std[1]
         self._theta %= 2*np.pi
