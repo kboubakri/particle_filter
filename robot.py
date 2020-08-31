@@ -1,4 +1,5 @@
 from utils import Position
+import numpy as np
 from numpy import sqrt
 
 class Robot:
@@ -39,7 +40,7 @@ class DistanceSensor:
         """
         noisy_distances = []
         for landmark in range(len(self._landmarks_list._X)):
-            dx = self._robot._noisy_position._x - self._landmarks_list._X[landmark]
-            dy = self._robot._noisy_position._y - self._landmarks_list._Y[landmark]
+            dx = self._robot._noisy_position._x - self._landmarks_list._X[landmark] + np.random.randn()*self._std_sens
+            dy = self._robot._noisy_position._y - self._landmarks_list._Y[landmark] + np.random.randn()*self._std_sens
             noisy_distances.append(sqrt(dx**2+dy**2))
         return noisy_distances

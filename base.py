@@ -10,7 +10,7 @@ DIM_OF_WORLD = [20,20]
 NB_OF_LANDMARKS = 10
 NB_OF_PARTICLES = 50
 STD_ACTUATORS = [0.3,0.1]
-STD_SENSOR = 0.1
+STD_SENSOR = 0.3
 
 class StaticLandmarks:
     """
@@ -104,9 +104,9 @@ class Base:
             estimated_positon,covariance = self._particle_filter.estimate_position()
             # Print output
             # self.print_out(self._robot._noisy_position,estimated_positon,covariance)
-        # Update the graphical interface
-        self._GI_handler.update_GI(self._robot._position,self._robot._noisy_position,self._particle_filter._particles)
-        self._has_move = False
+            # Update the graphical interface
+            self._GI_handler.update_GI(self._robot._position,self._robot._noisy_position,self._particle_filter._particles)
+            self._has_move = False
 
     def check_key(self):
         """
